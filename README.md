@@ -1,6 +1,6 @@
-# Source code and images for: Driven particle flux through a membrane: Two-scale asymptotics of a diffusion equation with polynomial drift
+# Driven particle flux through a membrane: Two-scale asymptotics of a diffusion equation with polynomial drift
 
-This repository contains the source code, produced data and images for [this][1] paper.
+This repository contains the source code, produced data and images for [this paper][1] by I. de Bonis, E. N. M. Cirillo, A. Muntean and O. M. Richardson.
 
 ## Requirements
 
@@ -28,7 +28,7 @@ The folder `results` contains a VTK file of a simulation that can be visualised 
 
 ## Contact
 
-Feel free direct any issues, questions, or comments to the owner of the repository.
+Feel free direct any issues, questions, or comments to the owner of the repository (O. M. Richardson).
 
 [1]: https://arxiv.org/abs/1804.08392
 [2]: https://fenicsproject.org/
