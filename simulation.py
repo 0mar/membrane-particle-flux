@@ -1,6 +1,7 @@
 import numpy as np
 import fenics as fe
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 import mshr
 
 
@@ -12,9 +13,10 @@ class MembraneSimulator:
     length = 1
     w = 0.25
     b = 2
-    d1 = 10
+    d1 = 1
     d2 = 1
     eta = 0.2
+    alpha = 3
 
     def __init__(self):
         self.h = .4
@@ -63,7 +65,7 @@ class MembraneSimulator:
         """
         # return fe.Constant(((1, 0), (0, 0))) * fe.grad(u * (1 - u))
         return -MembraneSimulator.b * MembraneSimulator.length / (2 * MembraneSimulator.d1) * fe.Constant(
-            (1, 0)) * u * (1 - u)
+            (1, MembraneSimulator.alpha)) * u * (1 - u)
 
     def solve_cell_problems(self, method='regularized', plot=False):
         """
@@ -143,6 +145,7 @@ class MembraneSimulator:
                 print("Cell solution")
                 print(np.min(self.cell_solutions[i].vector().get_local()),
                       np.max(self.cell_solutions[i].vector().get_local()))
+                plt.savefig('anothercell.pdf')
                 plt.show()
 
     def compute_effective_diffusion(self):
@@ -188,7 +191,7 @@ class MembraneSimulator:
         fe.plot(val, mesh=self.mesh)
         plt.show()
 
-    def solve_pde(self):
+    def solve_pde(self,name='pde'):
         u = fe.Function(self.function_space)
         v = fe.TestFunction(self.function_space)
         u_old = fe.project(self.u_0, self.function_space)
@@ -203,17 +206,22 @@ class MembraneSimulator:
             print("Step %d" % n)
             self.time += self.dt
             fe.solve(full_form == 0, u, bc)
-            # fe.plot(u)
-            # plt.show()
+            fe.plot(u)
+            plt.savefig('images/plt%d.pdf'%n)
+            plt.show()
             # print(fe.errornorm(u_old, u))
             u_old.assign(u)
             self.file << (u, self.time)
+        plt.figure()
+        # u=u+1E-9
         f = fe.plot(u)
+        # f = fe.plot(u,norm=colors.LogNorm(vmin=1E-9,vmax=2E-4))
         plt.rc('text', usetex=True)
         plt.colorbar(f,format='%.0e')
-        plt.title(r'Macroscopic density profile of $u(x,t)$ at $t=1$')
+        plt.title(r'Macroscopic density $u(x,t=1)$ for $\alpha=%.1f$'%MembraneSimulator.alpha)
         plt.xlabel(r'$x_1$')
         plt.ylabel(r'$x_2$')
+        plt.savefig('%s.pdf'%name)
         plt.show()
 
     def solve_homogenized(self):
@@ -241,6 +249,7 @@ class MembraneSimulator:
         plt.title(r'Value of diffusion coefficient for decreasing $\delta$')
         plt.xlabel('$\delta$')
         plt.ylabel(r'$D^*_{22}$')
+        plt.savefig('ratios.eps')
         plt.show()
 
     def plot_cells(self):
@@ -261,7 +270,17 @@ class MembraneSimulator:
         plt.title('Effective vertical diffusion for varying $\eta$')
         plt.xlabel('$\eta$')
         plt.ylabel(r'$D^*_{22}$')
+        plt.savefig('cells.eps')
         plt.show()
+
+    def test_drift(self):
+        alphas = np.array([0.1,0.3,1,1.5,5,10,15])
+        self.obs_length = 0.7
+        for i, alpha in enumerate(alphas):
+            MembraneSimulator.alpha = alpha
+            self.solve_cell_problems()
+            self.compute_effective_diffusion()
+            self.solve_pde('alphaplot_%d'%i)
 
     @staticmethod
     def full_boundary(x, on_boundary):
@@ -274,7 +293,4 @@ class MembraneSimulator:
 
 if __name__ == "__main__":
     solver = MembraneSimulator()
-    # solver.solve_cell_problems(plot=False)
-    solver.solve_homogenized()
-    # solver.plot_cells()
-    # solver.plot_ratios()
+    solver.test_drift()
